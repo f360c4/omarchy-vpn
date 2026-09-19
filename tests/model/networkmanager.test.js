@@ -302,6 +302,37 @@ test("nmDetails names a live L2TP tunnel and its gateway", () => {
   eq(rows[2], Shared.detail("Gateway", "203.0.113.10"))
 })
 
+test("nmEmptyText names only the tools that are installed", () => {
+  eq(NetworkManager.nmEmptyText({ openvpn: true, wireguard: true }),
+    "No profiles yet. Create one with: nmcli connection import type openvpn file <config.ovpn>"
+    + " — or: nmcli connection import type wireguard file <config.conf>")
+
+  // The line used to name OpenVPN and WireGuard on a machine that had neither.
+  eq(NetworkManager.nmEmptyText({ l2tp: true }).indexOf("openvpn"), -1)
+  eq(NetworkManager.nmEmptyText({ l2tp: true }).indexOf("wireguard"), -1)
+})
+
+test("nmEmptyText builds rather than imports for the IPsec kinds", () => {
+  // L2TP's importer only takes .cnf, which is not what a gateway is handed out
+  // as, so the hint has to name every field the profile cannot do without.
+  const l2tp = NetworkManager.nmEmptyText({ l2tp: true })
+  eq(l2tp.indexOf("vpn-type l2tp") !== -1, true)
+  eq(l2tp.indexOf("gateway = <host>") !== -1, true)
+  eq(l2tp.indexOf("user = <you>") !== -1, true)
+  eq(l2tp.indexOf("ipsec-enabled = yes") !== -1, true)
+
+  // VPNC keeps vpnc.conf's spelling, which is why these are not `gateway` and
+  // `username` like everywhere else.
+  const vpnc = NetworkManager.nmEmptyText({ vpnc: true })
+  eq(vpnc.indexOf("IPSec gateway = <host>") !== -1, true)
+  eq(vpnc.indexOf("Xauth username = <you>") !== -1, true)
+})
+
+test("nmEmptyText says nothing it cannot back up", () => {
+  eq(NetworkManager.nmEmptyText({}), "No profiles yet.")
+  eq(NetworkManager.nmEmptyText(), "No profiles yet.")
+})
+
 test("nmSummary tells no profiles from none connected", () => {
   eq(NetworkManager.nmSummary([]), "No profiles")
   eq(NetworkManager.nmSummary([{ name: "Work", active: false }]), "Not connected")

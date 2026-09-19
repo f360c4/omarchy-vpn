@@ -274,6 +274,40 @@ function nmTargets(profiles, authScript) {
   return targets
 }
 
+// Each plugin has its own way in, and naming one that is not installed sends
+// people after a package they do not need — the line named OpenVPN and
+// WireGuard whatever was actually installed. OpenVPN and WireGuard import the
+// file someone is handed; an IPsec gateway arrives as a set of values in an
+// email rather than a file, so those profiles are built field by field. The
+// key names are the ones NetworkManager itself stores, which is why they are
+// spelled inconsistently.
+function nmEmptyText(tools) {
+  var available = tools || {}
+  var ways = []
+
+  if (available.openvpn) {
+    ways.push("nmcli connection import type openvpn file <config.ovpn>")
+  }
+  if (available.wireguard) {
+    ways.push("nmcli connection import type wireguard file <config.conf>")
+  }
+  if (available.openconnect) {
+    ways.push("nmcli connection add type vpn vpn-type openconnect con-name <name>"
+      + " -- vpn.data \"gateway = <host>\"")
+  }
+  if (available.vpnc) {
+    ways.push("nmcli connection add type vpn vpn-type vpnc con-name <name>"
+      + " -- vpn.data \"IPSec gateway = <host>, IPSec ID = <group>, Xauth username = <you>\"")
+  }
+  if (available.l2tp) {
+    ways.push("nmcli connection add type vpn vpn-type l2tp con-name <name>"
+      + " -- vpn.data \"gateway = <host>, user = <you>, ipsec-enabled = yes\"")
+  }
+
+  if (ways.length === 0) return "No profiles yet."
+  return "No profiles yet. Create one with: " + ways.join(" — or: ")
+}
+
 function nmSummary(profiles) {
   for (var i = 0; i < profiles.length; i++) {
     if (profiles[i].active) return profiles[i].name

@@ -75,7 +75,13 @@ Item {
   readonly property string summary: NetworkManager.nmSummary(profiles)
   readonly property var details: NetworkManager.nmDetails(profiles)
   readonly property var targets: NetworkManager.nmTargets(profiles, root.openconnectAuth)
-  readonly property string emptyText: "No profiles yet. Import one with: nmcli connection import type openvpn file <config.ovpn> — or type wireguard file <config.conf>"
+  readonly property string emptyText: NetworkManager.nmEmptyText({
+    "openvpn": _openvpnPresent,
+    "wireguard": _wireguardPresent,
+    "openconnect": _openconnectPresent,
+    "vpnc": _vpncPresent,
+    "l2tp": _l2tpPresent
+  })
   readonly property string currentKey: {
     var profile = NetworkManager.activeNmProfile(profiles)
     return profile ? "profile:" + profile.uuid : ""
