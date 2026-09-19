@@ -41,11 +41,13 @@ Item {
   property bool _wireguardPresent: false
   property bool _openconnectPresent: false
   property bool _vpncPresent: false
+  property bool _l2tpPresent: false
   property int _probesDone: 0
   property bool _probed: false
 
   readonly property bool _toolsPresent:
-    _nmcliPresent && (_openvpnPresent || _wireguardPresent || _openconnectPresent || _vpncPresent)
+    _nmcliPresent && (_openvpnPresent || _wireguardPresent || _openconnectPresent
+      || _vpncPresent || _l2tpPresent)
   // Having the tools is not having anything to connect to. NetworkManager is
   // the one backend whose list can be legitimately empty on a working install,
   // and a chip leading to an empty list is a chip worth not drawing.
@@ -92,7 +94,7 @@ Item {
   // probed this is nothing rather than five more processes every poll.
   function detect(force) {
     if (nmcliProbe.running || openvpnProbe.running || wireguardProbe.running
-        || openconnectProbe.running || vpncProbe.running) return
+        || openconnectProbe.running || vpncProbe.running || l2tpProbe.running) return
     if (_probed && force !== true) return
     _probesDone = 0
     nmcliProbe.running = true
@@ -100,11 +102,12 @@ Item {
     wireguardProbe.running = true
     openconnectProbe.running = true
     vpncProbe.running = true
+    l2tpProbe.running = true
   }
 
   function _probeFinished() {
     root._probesDone += 1
-    if (root._probesDone < 5) return
+    if (root._probesDone < 6) return
     root._probed = true
     if (root._toolsPresent) root.refresh()
   }
@@ -218,6 +221,7 @@ Item {
     if (profile.kind === "wireguard") return _wireguardPresent
     if (profile.kind === "openconnect") return _openconnectPresent
     if (profile.kind === "vpnc") return _vpncPresent
+    if (profile.kind === "l2tp") return _l2tpPresent
     return _openvpnPresent
   }
 
@@ -327,6 +331,24 @@ Item {
     running: true
     onExited: function(exitCode) {
       root._vpncPresent = exitCode === 0
+      root._probeFinished()
+    }
+  }
+
+  // Same reasoning as VPNC: the L2TP carrier is the NetworkManager service, not
+  // the xl2tpd and pppd binaries it drives, and distributions disagree on where
+  // it lands.
+  Process {
+    id: l2tpProbe
+    command: ["sh", "-c", [
+      "test -x /usr/lib/nm-l2tp-service",
+      "test -x /usr/libexec/nm-l2tp-service",
+      "test -x /usr/lib/NetworkManager/nm-l2tp-service",
+      "test -x /usr/lib/networkmanager/nm-l2tp-service"
+    ].join(" || ")]
+    running: true
+    onExited: function(exitCode) {
+      root._l2tpPresent = exitCode === 0
       root._probeFinished()
     }
   }
@@ -446,6 +468,8 @@ Item {
           candidate.kind = "openconnect"
         } else if (NetworkManager.isVpncService(detail.serviceType)) {
           candidate.kind = "vpnc"
+        } else if (NetworkManager.isL2tpService(detail.serviceType)) {
+          candidate.kind = "l2tp"
         } else if (!NetworkManager.isOpenVpnService(detail.serviceType)) {
           continue
         }
