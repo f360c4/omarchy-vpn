@@ -1,17 +1,18 @@
 .pragma library
 .import "Shared.js" as Shared
 
-// OpenVPN, WireGuard, OpenConnect and VPNC profiles, via `nmcli`. Parsing and
-// row-building only — the process plumbing lives in NetworkManagerBackend.qml.
+// OpenVPN, WireGuard, OpenConnect, VPNC and L2TP/IPsec profiles, via `nmcli`.
+// Parsing and row-building only — the process plumbing lives in
+// NetworkManagerBackend.qml.
 
 //
-// All four live here because on a desktop they are NetworkManager profiles:
+// All five live here because on a desktop they are NetworkManager profiles:
 // same listing call, same activation and teardown. What differs is how
-// NetworkManager types them — OpenVPN, OpenConnect and VPNC are `vpn`
+// NetworkManager types them — OpenVPN, OpenConnect, VPNC and L2TP are `vpn`
 // connections with a service-type plugin behind them, while WireGuard is its
 // own connection type with the keys in the profile.
 //
-// OpenConnect differs from the other three in one way that reaches this file: it
+// OpenConnect differs from the other four in one way that reaches this file: it
 // cannot be brought up with `connection up` alone. Its cookie/gateway/gwcert/
 // resolve secrets are all flagged not-saved, so every activation needs a
 // secret agent to produce them, and the answer is a helper that runs the

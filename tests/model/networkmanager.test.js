@@ -145,10 +145,11 @@ test("vpnDataValue matches the whole key, not a prefix", () => {
   eq(NetworkManager.vpnDataValue("", "gateway"), "")
 })
 
-test("nmKindLabel names all four kinds", () => {
+test("nmKindLabel names all five kinds", () => {
   eq(NetworkManager.nmKindLabel({ kind: "wireguard" }), "WireGuard")
   eq(NetworkManager.nmKindLabel({ kind: "openconnect" }), "OpenConnect")
   eq(NetworkManager.nmKindLabel({ kind: "vpnc" }), "VPNC")
+  eq(NetworkManager.nmKindLabel({ kind: "l2tp" }), "L2TP")
   eq(NetworkManager.nmKindLabel({ kind: "vpn" }), "OpenVPN")
 })
 

@@ -4,10 +4,10 @@ import "model/Shared.js" as Shared
 import "model/NetworkManager.js" as NetworkManager
 
 // NetworkManager backend: every tunnel NetworkManager owns, which on a desktop
-// means OpenVPN, WireGuard, OpenConnect and VPNC. None has a session daemon of
-// its own to ask — NetworkManager is what imports and stores `.ovpn` files,
-// WireGuard configs and concentrator profiles alike. Implements the backend
-// contract documented in VpnController.qml.
+// means OpenVPN, WireGuard, OpenConnect, VPNC and L2TP/IPsec. None has a
+// session daemon of its own to ask — NetworkManager is what imports and stores
+// `.ovpn` files, WireGuard configs and concentrator profiles alike. Implements
+// the backend contract documented in VpnController.qml.
 Item {
   id: root
   visible: false
@@ -17,10 +17,11 @@ Item {
 
   readonly property string backendId: "networkmanager"
   readonly property string label: "NetworkManager"
-  // Four names, because this backend is the only way to reach any of the
+  // Five names, because this backend is the only way to reach any of the
   // protocols and the label names the manager rather than anything you would
-  // install.
-  readonly property var installNames: ["OpenVPN", "WireGuard", "OpenConnect", "VPNC"]
+  // install. One per probe below: a name here that nothing probes for would
+  // offer a user a tool the backend then refuses to run profiles of.
+  readonly property var installNames: ["OpenVPN", "WireGuard", "OpenConnect", "VPNC", "L2TP"]
 
   // The helper that authenticates an OpenConnect profile. Resolved here
   // because only the backend knows where the plugin is installed.
@@ -97,7 +98,7 @@ Item {
   // the discovery that would settle that question belongs in refresh(), which
   // the controller skips for a hidden tool. Falling through to it here would
   // poll a tool the user switched off. The binaries do not come and go, so once
-  // probed this is nothing rather than five more processes every poll.
+  // probed this is nothing rather than six more processes every poll.
   function detect(force) {
     if (nmcliProbe.running || openvpnProbe.running || wireguardProbe.running
         || openconnectProbe.running || vpncProbe.running || l2tpProbe.running) return
